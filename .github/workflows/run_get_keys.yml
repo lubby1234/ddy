@@ -1,4 +1,4 @@
-name: Update Channel Auth
+name: Grab Encryption Keys
 
 # Run manually or every 12 hours (00:00 & 12:00 UTC)
 on:
@@ -25,19 +25,23 @@ jobs:
         run: |
           pip install --upgrade pip
 
-      - name: Run channel-auth script
+      - name: Run auth-list generator
         run: |
           python generate_auth_list.py
 
-      - name: Commit updated channelAuth.txt (amend last commit)
+      - name: Fetch binary keys
+        run: |
+          python grab_keys.py
+
+      - name: Commit updated outputs (amend last commit)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add channelAuth.txt
+          git add channelAuth.txt channelKeys.json
           if ! git diff --cached --quiet; then
             git commit --amend --no-edit
           else
-            echo "No changes to channelAuth.txt"
+            echo "No changes to commit"
             exit 0
           fi
 
