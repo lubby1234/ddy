@@ -1,0 +1,48 @@
+name: Update Channel Auth
+
+# Run manually or every 12 hours (00:00 & 12:00 UTC)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  refresh-auth:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+
+      - name: Run channel-auth script
+        run: |
+          python generate_auth_list.py
+
+      - name: Commit updated channelAuth.txt (amend last commit)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channelAuth.txt
+          if ! git diff --cached --quiet; then
+            git commit --amend --no-edit
+          else
+            echo "No changes to channelAuth.txt"
+            exit 0
+          fi
+
+      - name: Force-push to repo
+        run: |
+          git push origin HEAD:${{ github.ref_name }} --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
